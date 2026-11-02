@@ -7,7 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -qo VerityExtractor*\(1\).zip
+      - name: Descomprimir el zip correcto
+        run: |
+          for z in *.zip; do
+            rm -rf tmp
+            mkdir tmp
+            unzip -q "$z" -d tmp
+            if ! grep -q "<circle" tmp/VerityExtractor/app/src/main/res/drawable/launcher_foreground.xml; then
+              mv tmp/VerityExtractor .
+              break
+            fi
+          done
+          ls VerityExtractor
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -21,3 +32,4 @@ jobs:
         with:
           name: VerityExtractor-APK
           path: VerityExtractor/app/build/outputs/apk/debug/app-debug.apk
+          
