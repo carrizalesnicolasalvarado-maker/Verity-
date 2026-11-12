@@ -1,39 +1,33 @@
-name: Crear APK
+name: Build APK
+
 on:
   push:
   workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Usar el zip más reciente
-        run: |
-          best=""
-          bt=0
-          for z in *.zip; do
-            t=$(git log -1 --format=%ct -- "$z")
-            if [ "$t" -gt "$bt" ]; then
-              bt=$t
-              best="$z"
-            fi
-          done
-          echo "Usando: $best"
-          unzip -q "$best"
-          ls VerityExtractor
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.9
-      - run: gradle assembleDebug
-        working-directory: VerityExtractor
-      - uses: actions/upload-artifact@v4
+          gradle-version: 8.7
+
+      - name: Compilar APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Publicar APK suelto
+        uses: softprops/action-gh-release@v2
         with:
-          name: VerityExtractor-APK
-          path: VerityExtractor/app/build/outputs/apk/debug/app-debug.apk
-          
+          tag_name: apk-${{ github.run_number }}
+          name: APK ${{ github.run_number }}
+          files: app/build/outputs/apk/debug/app-debug.apk
